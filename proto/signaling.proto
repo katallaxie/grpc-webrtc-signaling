@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package proto;
+
+// The signaling service provides signaling capabilities for WebRTC.
+service Signaling {
+  // Wait is the rpc that pushes signaling information to a connected peer.
+  rpc Wait(Greeting) returns (stream Signal){}
+
+  // Send is sending individual signaling information to connected peers.
+  rpc Send(Signal) returns (Empty){}
+}
+
+// Media to be used to for the peer connection
+enum Media {
+  DATA    = 0;
+  VIDEO   = 1;
+  AUDIO   = 2;
+  MIXED   = 3;
+}
+
+// Sdp represents the connection string and type of peer connection.
+message Sdp {
+  string sdp  = 1;
+  string type = 2;
+}
+
+// Meta information for a WebRTC offer and answer.
+message Meta {
+  string session  = 1;
+  string to       = 2;
+  string from     = 3;
+}
+
+// Greeting is representing a new possible peer.
+message Greeting {
+  string uuid = 1;
+
+  string id   = 2;
+  map<string, string> details = 3;
+}
+
+// This represents a WebRTC offer for another peer.
+message Offer {
+  string uuid = 1;
+
+  Meta meta   = 2;
+  Sdp sdp     = 3;
+  Media media = 4;
+}
+
+// This represents a WebRTC answer for another peer.
+message Answer {
+  string uuid = 1;
+
+  Meta meta   = 2;
+  Sdp sdp     = 3;
+  Media media = 4;
+}
+
+// Represents an ICE candidate to be exchanged between peers.
+message Candidate {
+  message Info {
+    int32 sdp_m_line_index = 1;
+    string sdp_mid = 2;
+    string canidate = 3;
+  }
+
+  string uuid = 1;
+
+  Meta meta   = 2;
+  Info info   = 3;
+}
+
+
+// Leave is announcing to leave a session
+message Leave {
+  string uuid = 1;
+
+  Meta meta   = 2;
+}
+
+// Signal is the information that can be exchanged between peers.
+message Signal {
+  oneof signal {
+    Offer offer         = 1;
+    Answer answer       = 2;
+    Leave leave         = 3;
+    Candidate candidate = 4;
+    Error error         = 10;
+  }
+}
+
+// Error that can occur on the underlying connections.
+message Error {
+  enum ErrorStatus {
+    UNKNOWN = 0;
+    FAILED  = 1;
+  }
+
+  ErrorStatus status = 1;
+  string description = 2;
+}
+
+// Empty ...
+message Empty {}
